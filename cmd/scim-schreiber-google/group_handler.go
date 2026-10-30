@@ -37,7 +37,7 @@ func (h GroupHandler) Create(_ *http.Request, attributes scim.ResourceAttributes
 		return scim.Resource{}, scimerrors.ScimError{Status: http.StatusInternalServerError, Detail: err.Error()}
 	}
 
-	return h.groupToGroupResource(group, false)
+	return h.groupToGroupResource(group, true)
 }
 
 func (h GroupHandler) Delete(_ *http.Request, id string) error {
