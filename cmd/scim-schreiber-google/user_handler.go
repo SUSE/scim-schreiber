@@ -68,7 +68,17 @@ func (h UserHandler) Create(_ *http.Request, attributes scim.ResourceAttributes)
 
 func (h UserHandler) Delete(_ *http.Request, id string) error {
 	slog.Info("DELETE /v2/Users", "id", id)
-	err := h.adminClient.Users.Delete(id).Do()
+
+	var err error
+	if CanArchiveUser() {
+		_, err = h.adminClient.Users.Update(id, &admin.User{
+			Suspended: true,
+			Archived:  true,
+		}).Do()
+	} else {
+		err = h.adminClient.Users.Delete(id).Do()
+	}
+
 	if err != nil {
 		return scimerrors.ScimError{Status: http.StatusInternalServerError, Detail: err.Error()}
 	}
