@@ -35,6 +35,21 @@ func (c *Client) GetUser(username string) (*User, error) {
 
 func (c *Client) ListAllUsers(username string) iter.Seq2[*User, error] {
 	return func(yield func(*User, error) bool) {
+
+		if username != "" {
+			user, err := c.GetUser(username)
+
+			if err != nil {
+				yield(nil, err)
+			}
+
+			if user != nil {
+				yield(user, nil)
+			}
+
+			return
+		}
+
 		newu := c.config.baseURL.JoinPath("/rest/api/2/user/search")
 		v := newu.Query()
 		if username != "" {
@@ -48,7 +63,7 @@ func (c *Client) ListAllUsers(username string) iter.Seq2[*User, error] {
 
 		userResp := []User{}
 		n := 0
-		foundAtLeastOne := false
+
 		for {
 			v.Set("startAt", fmt.Sprintf("%d", n))
 			newu.RawQuery = v.Encode()
@@ -74,21 +89,11 @@ func (c *Client) ListAllUsers(username string) iter.Seq2[*User, error] {
 			}
 
 			for _, jiraUser := range userResp {
-				foundAtLeastOne = true
 				if !yield(&jiraUser, nil) {
 					return
 				}
 				n += 1
 			}
-		}
-
-		if !foundAtLeastOne && username != "" {
-			user, err := c.GetUser(username)
-			if err != nil || user == nil {
-				return
-			}
-
-			yield(user, nil)
 		}
 	}
 }
